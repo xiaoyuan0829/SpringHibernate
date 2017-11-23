@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/aop
+    	http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+    	http://www.springframework.org/schema/tx
+    	http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+        ">
+    <!-- 自动扫描 -->    
+    <context:component-scan base-package="com.springmvc">
+        <!-- 扫描时跳过 @Controller 注解的JAVA类（控制器） -->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+    
+	<!-- 加载资源文件 其中包含变量信息，必须在Spring配置文件的最前面加载，即第一个加载 -->
+	<context:property-placeholder location="classpath:db.properties" />
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="user" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.passowrd}"></property>
+		<property name="driverClass" value="${jdbc.driverClass}"></property>
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+	</bean>
+
+	<!-- 配置会话工厂 -->
+	<bean class="org.springframework.orm.hibernate5.LocalSessionFactoryBean"
+		id="sessionFactory">
+		<!-- 配置数据源 -->
+		<property name="dataSource" ref="dataSource"></property>
+
+		<property name="hibernateProperties">
+			<props>
+				<!-- 数据库的方言 -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<!-- 打印sql语句 -->
+				<prop key="hibernate.show_sql">true</prop>
+				<!-- 用更漂亮的格式显示sql语句-->
+				<prop key="hibernate.format_sql">true</prop>
+				<!-- <prop key="hibernate.id.new_generator_mappings">false</prop> -->
+				<!-- 必要时在数据库新建所有表格 -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+		
+		<!-- 配置需要扫描的包路径，在该包下，所有的类注解配置都会被扫描 -->
+		<property name="packagesToScan" value="com.springmvc.model"></property>
+	</bean>
+	
+	<!-- 配置Hibernate事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+</beans>
